@@ -1,0 +1,53 @@
+data:
+    dataset: "CT"
+    # Path to the directory containing CT JPG images
+    # Can be overridden via command line or by setting data_path in args
+    data_path: "data/ct_images"
+    image_size: 256
+    channels: 3
+    logit_transform: false
+    uniform_dequantization: false
+    gaussian_dequantization: false
+    random_flip: false  # Usually CT images should not be flipped
+    rescaled: true
+    num_workers: 4
+
+model:
+    type: "simple"
+    in_channels: 3
+    out_ch: 3
+    ch: 128
+    ch_mult: [1, 1, 2, 2, 4, 4]  # For 256x256 images
+    num_res_blocks: 2
+    attn_resolutions: [16]
+    dropout: 0.1
+    var_type: fixedlarge
+    ema_rate: 0.9999
+    ema: true
+    resamp_with_conv: true
+
+diffusion:
+    beta_schedule: linear
+    beta_start: 0.0001
+    beta_end: 0.02
+    num_diffusion_timesteps: 1000
+
+training:
+    batch_size: 8  # Smaller batch size for larger images
+    n_epochs: 10000
+    n_iters: 5000000
+    snapshot_freq: 5000
+    validation_freq: 5000
+
+sampling:
+    batch_size: 4
+    last_only: true
+
+optim:
+    weight_decay: 0.000
+    optimizer: "Adam"
+    lr: 0.0001  # Lower learning rate for stability
+    beta1: 0.9
+    amsgrad: false
+    eps: 0.00000001
+    grad_clip: 1.0

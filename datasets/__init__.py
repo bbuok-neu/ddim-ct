@@ -7,6 +7,7 @@ from torchvision.datasets import CIFAR10
 from datasets.celeba import CelebA
 from datasets.ffhq import FFHQ
 from datasets.lsun import LSUN
+from datasets.ct import CTDataset
 from torch.utils.data import Subset
 import numpy as np
 
@@ -175,6 +176,37 @@ def get_dataset(args, config):
         )
         test_dataset = Subset(dataset, test_indices)
         dataset = Subset(dataset, train_indices)
+
+    elif config.data.dataset == "CT":
+        # Get data path from config or use default
+        data_path = getattr(config.data, 'data_path', os.path.join(args.exp, "datasets", "ct"))
+
+        # Build transform list for CT images (includes CenterCrop for consistent sizing)
+        base_transforms = [
+            transforms.Resize(config.data.image_size),
+            transforms.CenterCrop(config.data.image_size),
+        ]
+        if config.data.random_flip:
+            base_transforms.append(transforms.RandomHorizontalFlip(p=0.5))
+        base_transforms.append(transforms.ToTensor())
+
+        ct_transform = transforms.Compose(base_transforms)
+        dataset = CTDataset(root=data_path, transform=ct_transform)
+
+        # Split into train and test sets (90% train, 10% test)
+        num_items = len(dataset)
+        indices = list(range(num_items))
+        random_state = np.random.get_state()
+        np.random.seed(2019)
+        np.random.shuffle(indices)
+        np.random.set_state(random_state)
+        train_indices, test_indices = (
+            indices[: int(num_items * 0.9)],
+            indices[int(num_items * 0.9) :],
+        )
+        test_dataset = Subset(dataset, test_indices)
+        dataset = Subset(dataset, train_indices)
+
     else:
         dataset, test_dataset = None, None
 

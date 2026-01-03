@@ -181,24 +181,16 @@ def get_dataset(args, config):
         # Get data path from config or use default
         data_path = getattr(config.data, 'data_path', os.path.join(args.exp, "datasets", "ct"))
 
+        # Build transform list for CT images (includes CenterCrop for consistent sizing)
+        base_transforms = [
+            transforms.Resize(config.data.image_size),
+            transforms.CenterCrop(config.data.image_size),
+        ]
         if config.data.random_flip:
-            ct_transform = transforms.Compose(
-                [
-                    transforms.Resize(config.data.image_size),
-                    transforms.CenterCrop(config.data.image_size),
-                    transforms.RandomHorizontalFlip(p=0.5),
-                    transforms.ToTensor(),
-                ]
-            )
-        else:
-            ct_transform = transforms.Compose(
-                [
-                    transforms.Resize(config.data.image_size),
-                    transforms.CenterCrop(config.data.image_size),
-                    transforms.ToTensor(),
-                ]
-            )
+            base_transforms.append(transforms.RandomHorizontalFlip(p=0.5))
+        base_transforms.append(transforms.ToTensor())
 
+        ct_transform = transforms.Compose(base_transforms)
         dataset = CTDataset(root=data_path, transform=ct_transform)
 
         # Split into train and test sets (90% train, 10% test)

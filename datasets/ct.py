@@ -32,6 +32,9 @@ class CTDataset(Dataset):
 
     def _find_images(self):
         """Find all image files with valid extensions in the root directory."""
+        if not os.path.isdir(self.root):
+            raise RuntimeError(f"Directory '{self.root}' does not exist.")
+
         images = []
         for filename in sorted(os.listdir(self.root)):
             if filename.lower().endswith(self.extensions):
